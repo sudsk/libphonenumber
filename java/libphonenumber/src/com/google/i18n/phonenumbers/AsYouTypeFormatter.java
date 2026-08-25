@@ -89,6 +89,7 @@ public class AsYouTypeFormatter {
   // space.
   private static final String DIGIT_PLACEHOLDER = "\u2008";
   private static final Pattern DIGIT_PATTERN = Pattern.compile(DIGIT_PLACEHOLDER);
+  private static final Pattern FIRST_GROUP_PATTERN = Pattern.compile("(\\$\\d)");
   private int lastMatchPosition = 0;
   // The position of a digit upon which inputDigitAndRememberPosition is most recently invoked, as
   // found in the original sequence of characters the user entered.
@@ -220,10 +221,36 @@ public class AsYouTypeFormatter {
     }
   }
 
+  private String getFormattingTemplateForFirstGroup(String nationalPrefixFormattingRule) {
+    String firstGroupRule = nationalPrefixFormattingRule.replace("$NP", "").replace("$FG", "$1");
+    String np = extractedNationalPrefix;
+    if (np.length() == 0) {
+      np = currentMetadata.getNationalPrefix();
+    }
+    if (np.length() > 0) {
+      if (!firstGroupRule.startsWith(np)) {
+        return "";
+      }
+      firstGroupRule = firstGroupRule.substring(np.length());
+    }
+    return firstGroupRule.trim();
+  }
+
   private boolean createFormattingTemplate(NumberFormat format) {
     String numberPattern = format.getPattern();
     formattingTemplate.setLength(0);
-    String tempTemplate = getFormattingTemplate(numberPattern, format.getFormat());
+    String numberFormatString = format.getFormat();
+    String nationalPrefixFormattingRule = format.getNationalPrefixFormattingRule();
+    if (nationalPrefixFormattingRule.length() > 0) {
+      Matcher firstGroupMatcher = FIRST_GROUP_PATTERN.matcher(numberFormatString);
+      if (firstGroupMatcher.find()) {
+        String firstGroupRule = getFormattingTemplateForFirstGroup(nationalPrefixFormattingRule);
+            if (firstGroupRule.length() > 0) {
+              numberFormatString = firstGroupMatcher.replaceFirst(firstGroupRule);
+            }
+      }
+    }
+    String tempTemplate = getFormattingTemplate(numberPattern, numberFormatString);
     if (tempTemplate.length() > 0) {
       formattingTemplate.append(tempTemplate);
       return true;
@@ -427,7 +454,18 @@ public class AsYouTypeFormatter {
         shouldAddSpaceAfterNationalPrefix =
             NATIONAL_PREFIX_SEPARATORS_PATTERN.matcher(
                 numberFormat.getNationalPrefixFormattingRule()).find();
-        String formattedNumber = m.replaceAll(numberFormat.getFormat());
+        String numberFormatString = numberFormat.getFormat();
+        String nationalPrefixFormattingRule = numberFormat.getNationalPrefixFormattingRule();
+        if (nationalPrefixFormattingRule.length() > 0) {
+          Matcher firstGroupMatcher = FIRST_GROUP_PATTERN.matcher(numberFormatString);
+          if (firstGroupMatcher.find()) {
+            String firstGroupRule = getFormattingTemplateForFirstGroup(nationalPrefixFormattingRule);
+            if (firstGroupRule.length() > 0) {
+              numberFormatString = firstGroupMatcher.replaceFirst(firstGroupRule);
+            }
+          }
+        }
+        String formattedNumber = m.replaceAll(numberFormatString);
         // Check that we did not remove nor add any extra digits when we matched
         // this formatting pattern. This usually happens after we entered the last
         // digit during AYTF. Eg: In case of MX, we swallow mobile token (1) when
