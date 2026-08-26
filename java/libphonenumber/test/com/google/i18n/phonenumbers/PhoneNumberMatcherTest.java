@@ -77,6 +77,36 @@ public class PhoneNumberMatcherTest extends TestMetadataTestCase {
     assertTrue(PhoneNumberMatcher.containsMoreThanOneSlashInNationalNumber(number, candidate));
   }
 
+  public void testAllNumberGroupsRemainGrouped() throws Exception {
+    // When the country code source is not FROM_DEFAULT_COUNTRY, but normalizedCandidate does not
+    // contain the country code digits, indexOf(countryCode) returns -1. fromIndex must remain 0
+    // rather than becoming countryCode.length() - 1.
+    PhoneNumber number = new PhoneNumber();
+    number.setCountryCode(49);
+    number.setCountryCodeSource(CountryCodeSource.FROM_NUMBER_WITHOUT_PLUS_SIGN);
+    StringBuilder candidate = new StringBuilder("030 1234567");
+    String[] formattedGroups = new String[] {"030", "1234567"};
+    assertTrue(PhoneNumberMatcher.allNumberGroupsRemainGrouped(
+        phoneUtil, number, candidate, formattedGroups));
+
+    number = new PhoneNumber();
+    number.setCountryCode(358);
+    number.setCountryCodeSource(CountryCodeSource.FROM_NUMBER_WITH_PLUS_SIGN);
+    candidate = new StringBuilder("12 34 56");
+    formattedGroups = new String[] {"12", "34", "56"};
+    assertTrue(PhoneNumberMatcher.allNumberGroupsRemainGrouped(
+        phoneUtil, number, candidate, formattedGroups));
+
+    // When normalizedCandidate actually contains the country code digits.
+    number = new PhoneNumber();
+    number.setCountryCode(49);
+    number.setCountryCodeSource(CountryCodeSource.FROM_NUMBER_WITH_PLUS_SIGN);
+    candidate = new StringBuilder("+49 30 1234567");
+    formattedGroups = new String[] {"30", "1234567"};
+    assertTrue(PhoneNumberMatcher.allNumberGroupsRemainGrouped(
+        phoneUtil, number, candidate, formattedGroups));
+  }
+
   /** See {@link PhoneNumberUtilTest#testParseNationalNumber()}. */
   public void testFindNationalNumber() throws Exception {
     // same cases as in testParseNationalNumber
