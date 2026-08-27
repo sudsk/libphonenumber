@@ -20,9 +20,11 @@ import com.google.i18n.phonenumbers.Phonemetadata.NumberFormat;
 import com.google.i18n.phonenumbers.Phonemetadata.PhoneMetadata;
 import com.google.i18n.phonenumbers.Phonemetadata.PhoneMetadataCollection;
 import com.google.i18n.phonenumbers.Phonemetadata.PhoneNumberDesc;
+import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.Arrays;
+import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -1115,5 +1117,25 @@ public class BuildMetadataFromXmlTest extends TestCase {
     } catch (RuntimeException e) {
       // Test passed.
     }
+  }
+  public void testBangladeshVoipPrefix9647() throws Exception {
+    File xmlFile = new File("resources/PhoneNumberMetadata.xml");
+    if (!xmlFile.exists()) {
+      xmlFile = new File("../../../resources/PhoneNumberMetadata.xml");
+    }
+    PhoneMetadataCollection metadataCollection = BuildMetadataFromXml.buildPhoneMetadataCollection(
+        xmlFile.getAbsolutePath(), false, false);
+    PhoneMetadata bdMetadata = null;
+    for (PhoneMetadata metadata : metadataCollection.getMetadataList()) {
+      if ("BD".equals(metadata.getId())) {
+        bdMetadata = metadata;
+        break;
+      }
+    }
+    assertNotNull("BD metadata not found in PhoneNumberMetadata.xml", bdMetadata);
+    Pattern voipPattern = Pattern.compile(bdMetadata.getVoip().getNationalNumberPattern());
+    assertTrue(
+        "BD VoIP pattern in PhoneNumberMetadata.xml should match 10-digit 9647 VoIP numbers (e.g. 9647100123)",
+        voipPattern.matcher("9647100123").matches());
   }
 }
