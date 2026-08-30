@@ -292,4 +292,12 @@ public class ExampleNumbersTest extends TestCase {
     }
     assertEquals(0, wrongTagCounter);
   }
+
+  public void testAustrianNumberStartingWithCountryCallingCodeAndLeadingZero() throws Exception {
+    PhoneNumber expectedNumber =
+        new PhoneNumber().setCountryCode(43).setNationalNumber(6641400031L);
+    PhoneNumber parsedNumber = phoneNumberUtil.parse("4306641400031", "AT");
+    assertEquals(expectedNumber, parsedNumber);
+    assertTrue(phoneNumberUtil.isValidNumber(parsedNumber));
+  }
 }
