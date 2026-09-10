@@ -463,7 +463,12 @@ final class PhoneNumberMatcher implements Iterator<PhoneNumberMatch> {
     if (number.getCountryCodeSource() != CountryCodeSource.FROM_DEFAULT_COUNTRY) {
       // First skip the country code if the normalized candidate contained it.
       String countryCode = Integer.toString(number.getCountryCode());
-      fromIndex = normalizedCandidate.indexOf(countryCode) + countryCode.length();
+      fromIndex = normalizedCandidate.indexOf(countryCode);
+      if (fromIndex >= 0) {
+        fromIndex += countryCode.length();
+      } else {
+        fromIndex = 0;
+      }
     }
     // Check each group of consecutive digits are not broken into separate groupings in the
     // {@code normalizedCandidate} string.
