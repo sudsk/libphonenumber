@@ -33,6 +33,20 @@ import java.util.NoSuchElementException;
  */
 public class PhoneNumberMatcherTest extends TestMetadataTestCase {
 
+  public void testAllNumberGroupsRemainGroupedWhenCountryCodeNotInCandidate() {
+    PhoneNumber number = new PhoneNumber();
+    number.setCountryCode(49);
+    number.setNationalNumber(30123456L);
+    number.setCountryCodeSource(CountryCodeSource.FROM_NUMBER_WITHOUT_PLUS_SIGN);
+
+    // normalizedCandidate does not contain the country calling code "49"
+    StringBuilder normalizedCandidate = new StringBuilder("030 123456");
+    String[] formattedGroups = new String[] {"030", "123456"};
+
+    assertTrue(PhoneNumberMatcher.allNumberGroupsRemainGrouped(
+        phoneUtil, number, normalizedCandidate, formattedGroups));
+  }
+
   public void testContainsMoreThanOneSlashInNationalNumber() throws Exception {
     // A date should return true.
     PhoneNumber number = new PhoneNumber();
